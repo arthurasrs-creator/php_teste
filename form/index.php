@@ -1,15 +1,17 @@
 <?php
 $erros = [];
 
-if ($_SERVER["REQUEST_METHOD"] === "POST"){
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $nome =  $_POST["nome"];
     $idade =  $_POST["idade"];
     $matricula =  $_POST["matricula"];
     $curso =  $_POST["curso"];
-    if (trim($nome) === "") return "Nome obrigatório";
-    if (trim($idade) < 0 || null) return "Valor da idade inválida!";
-    if (trim($matricula) === "") return "Matricula obrigatória";
-    if (trim($curso) === "") return "Curso obrigatório";
+    if (trim($nome) === "") $erros[] = "Nome obrigatório";
+    if (trim($idade) === "" || $idade < 0) {
+        $erros[] = "Valor da idade inválida!";
+    }
+    if (trim($matricula) === "") $erros[] =  "Matricula obrigatória";
+    if (trim($curso) === "") $erros[] = "Curso obrigatório";
 }
 ?>
 
@@ -26,28 +28,28 @@ if ($_SERVER["REQUEST_METHOD"] === "POST"){
 <body>
     <form method="POST">
         <label>Nome:</label>
-        <input type="text" name="nome">
+        <input type="text" name="nome" value="<?= $nome ?? "" ?>">
 
         <br><br>
 
         <label>Idade:</label>
-        <input type="number" name="idade">
+        <input type="number" name="idade" value="<?= $idade ?? "" ?>">
 
         <br><br>
 
         <label>Matrícula</label>
-        <input type="text" name="matricula">
+        <input type="text" name="matricula" value="<?= $matricula ?? "" ?>">
 
         <br><br>
 
         <label>Curso</label>
-        <input type="text" name="curso">
+        <input type="text" name="curso" value="<?= $curso ?? "" ?>">
 
         <br><br>
 
         <button type="submit">Enviar</button>
     </form>
-    <?php if (!empty($erros)): ?>
+    <?php if ($_SERVER["REQUEST_METHOD"] === "POST" && !empty($erros)): ?>
         <?php foreach ($erros as $erro): ?>
             <p><?= $erro ?></p>
         <?php endforeach; ?>
