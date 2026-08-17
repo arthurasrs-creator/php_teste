@@ -28,22 +28,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <body>
     <form method="POST">
         <label>Nome:</label>
-        <input type="text" name="nome" value="<?= $nome ?? "" ?>">
+        <input type="text" name="nome" value="<?= htmlspecialchars($nome) ?? "" ?>">
 
         <br><br>
 
         <label>Idade:</label>
-        <input type="number" name="idade" value="<?= $idade ?? "" ?>">
+        <input type="number" name="idade" value="<?= htmlspecialchars($idade) ?? "" ?>">
 
         <br><br>
 
         <label>Matrícula</label>
-        <input type="text" name="matricula" value="<?= $matricula ?? "" ?>">
+        <input type="text" name="matricula" value="<?= htmlspecialchars($matricula) ?? "" ?>">
 
         <br><br>
 
         <label>Curso</label>
-        <input type="text" name="curso" value="<?= $curso ?? "" ?>">
+        <input type="text" name="curso" value="<?= htmlspecialchars($curso) ?? "" ?>">
 
         <br><br>
 
