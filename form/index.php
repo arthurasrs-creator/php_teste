@@ -1,4 +1,35 @@
 <?php
+
+session_start();
+
+$indiceEdicao = null;
+$alunoEdicao = null;
+
+if(!isset($_SESSION["alunos"])){
+    $_SESSION["alunos"] = [];
+}
+
+if(
+    isset($_GET["editar"]) && 
+    isset($_SESSION["alunos"][(int) $_GET["editar"]])){
+
+    $indiceEdicao = (int) $_GET["editar"];
+    $alunoEdicao = $_SESSION["alunos"][$indiceEdicao];
+
+    $nome = $alunoEdicao->getNome();
+    $idade = $alunoEdicao->getIdade();
+    $matricula = $alunoEdicao->getMatricula();
+    $curso = $alunoEdicao->getCurso();
+}
+
+if(isset($_GET["excluir"])){
+    $indice = (int) $_GET["excluir"];
+
+    unset($_SESSION["alunos"][$indice]);
+
+    $_SESSION["alunos"] = array_values($_SESSION["alunos"]);
+}
+
 class Aluno{
     private string $nome;
     private int $idade;
@@ -20,7 +51,7 @@ class Aluno{
     public function getNome(): string{
         return $this->nome; 
     }
-    public function getIdade(): string{
+    public function getIdade(): int{
         return $this->idade; 
     }
     public function getMatricula(): string{
@@ -45,6 +76,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
     if (trim($matricula) === "") $erros[] =  "Matricula obrigatória";
     if (trim($curso) === "") $erros[] = "Curso obrigatório";
+
     if(empty($erros)){
         $aluno = new Aluno(
             $nome,
@@ -52,6 +84,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $matricula,
             $curso
         );
+
+        if(isset($_POST["indice"])){
+            $indice = (int) $_POST["indice"];
+
+            $_SESSION["alunos"][$indice] = $aluno;
+        } else {
+            $_SESSION["alunos"][] = $aluno;
+        }
+
+        $nome = "";
+        $idade = "";
+        $matricula = "";
+        $curso = "";
     }
 }
 
@@ -69,6 +114,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <body>
     <form method="POST">
+        <?php if($indiceEdicao !== null): ?>
+        <input type="hidden" name="indice" value="<?= $indiceEdicao ?>">  
+        }
+        <?php endif; ?>
         <label>Nome:</label>
         <input type="text" name="nome" value="<?= htmlspecialchars($nome ?? "") ?>">
 
@@ -97,12 +146,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <?php endforeach; ?>
     <?php endif; ?>
 
-    <?php if ($aluno !== null): ?>
-        <h1>Aluno Cadastrado</h1>
+    <?php if (!empty($_SESSION["alunos"])): ?>
+        <h1>Alunos Cadastrados</h1>
+        <?php foreach ($_SESSION["alunos"] as $indice => $aluno): ?>
         <h2>Nome: <?= htmlspecialchars($aluno->getNome())  ?></h2>
         <h2>Idade: <?= htmlspecialchars($aluno->getIdade()) ?></h2>
         <h2>Matricula: <?= htmlspecialchars($aluno->getMatricula()) ?></h2>
         <h2>Curso: <?= htmlspecialchars($aluno->getCurso()) ?></h2>
+        <a href="?editar=<?= $indice ?>">Editar</a>
+        <a href="?excluir=<?= $indice ?>">Excluir</a>
+        <hr>
+        <br><br>
+        <?php endforeach; ?>
     <?php endif; ?>
 </body>
 
