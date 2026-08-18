@@ -1,4 +1,8 @@
 <?php
+require_once "config/database.php";
+
+echo "conexão realizada com sucesso!";
+
 require_once "classes/Aluno.php";
 
 session_start();
@@ -34,6 +38,9 @@ if (
     unset($_SESSION["alunos"][$indice]);
 
     $_SESSION["alunos"] = array_values($_SESSION["alunos"]);
+
+    header("Location: index.php");
+    exit;
 }
 
 
@@ -44,13 +51,14 @@ $aluno = null;
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if (isset($_POST["indice"])) {
-        $indice = (int) $_POST["indice"];
+        $indiceEdicao = (int) $_POST["indice"];
     }
 
     $nome =  $_POST["nome"];
     $idade =  $_POST["idade"];
     $matricula =  $_POST["matricula"];
     $curso =  $_POST["curso"];
+
     if (trim($nome) === "") $erros[] = "Nome obrigatório";
     if (trim($idade) === "" || $idade < 0) {
         $erros[] = "Valor da idade inválida!";
@@ -67,9 +75,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         );
 
         if (isset($_POST["indice"])) {
-            $indice = (int) $_POST["indice"];
 
-            $_SESSION["alunos"][$indice] = $aluno;
+            $_SESSION["alunos"][$indiceEdicao] = $aluno;
         } else {
             $_SESSION["alunos"][] = $aluno;
         }
@@ -78,6 +85,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $idade = "";
         $matricula = "";
         $curso = "";
+
+        header("Location: index.php");
+        exit;
     }
 }
 
@@ -90,7 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>CRUD ALUNOS</title>
 </head>
 
 <body>
