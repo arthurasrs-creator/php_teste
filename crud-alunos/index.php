@@ -1,8 +1,11 @@
 <?php
 require_once "config/database.php";
 require_once "classes/Aluno.php";
+require_once "classes/AlunoRepository.php";
 
 session_start();
+
+$repository = new AlunoRepository($pdo);
 
 $indiceEdicao = null;
 $alunoEdicao = null;
@@ -12,25 +15,18 @@ if (
     is_numeric($_GET["editar"])
 ) {
 
-    $indiceEdicao = (int) $_GET["editar"];
-    
-    $sql = "SELECT * FROM alunos WHERE id = :id";
+    $id = (int) $_GET["editar"];
 
-    $stmt = $pdo->prepare($sql);
+    $alunoEdicao = $repository->buscarPorId($id);
 
-    $stmt->execute([
-        "id" => $indiceEdicao
-    ]);
+    if ($alunoEdicao) {
+        $indiceEdicao = $id;
 
-    $alunoEdicao =  $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if($alunoEdicao){
         $nome = $alunoEdicao["nome"];
         $idade = $alunoEdicao["idade"];
         $matricula = $alunoEdicao["matricula"];
         $curso = $alunoEdicao["curso"];
-    }
-    else{
+    } else {
         $indiceEdicao = null;
     }
 }
@@ -41,13 +37,7 @@ if (
 ) {
     $id = (int) $_GET["excluir"];
 
-    $sql = "DELETE FROM alunos WHERE id = :id";
-    
-    $stmt = $pdo->prepare($sql);
-
-    $stmt->execute([
-        ":id" => $id
-    ]);
+    $repository->excluir($id);
 
     header("Location: index.php");
     exit;
@@ -84,60 +74,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $curso
         );
 
-        if(isset($_POST["id"])){
+        if (isset($_POST["id"])) {
             $id =  (int) $_POST["id"];
 
-            $sql = "
-            UPDATE alunos 
-            SET nome = :nome,
-                idade = :idade,
-                matricula = :matricula,
-                curso = :curso
-            WHERE id = :id
-            ";
-
-            $stmt = $pdo->prepare($sql);
-
-            $stmt->execute([
-                ":nome" => $aluno->getNome(),
-                ":idade" => $aluno->getIdade(),
-                ":matricula" => $aluno->getMatricula(),
-                ":curso" => $aluno->getCurso(),
-                ":id" => $id
-            ]);
-        }
-        else{
-        $sql = "
-        INSERT INTO alunos (nome, idade, matricula, curso) 
-        VALUES(:nome, :idade, :matricula, :curso)
-        ";
-
-        $stmt = $pdo->prepare($sql);
-
-        $stmt->execute([
-            "nome" => $aluno->getNome(),
-            "idade" => $aluno->getIdade(),
-            "matricula" => $aluno->getMatricula(),
-            "curso" => $aluno->getCurso()
-        ]);
-
-        $nome = "";
-        $idade = "";
-        $matricula = "";
-        $curso = "";
+            $repository->atualizar($id, $aluno);
+        } else {
+            $repository->criar($aluno);
         }
         header("Location: index.php");
         exit;
     }
 }
 
-$sql = "SELECT * FROM alunos";
-
-$stmt = $pdo->prepare($sql);
-
-$stmt->execute();
-
-$alunos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$alunos = $repository->listar();
 
 ?>
 
