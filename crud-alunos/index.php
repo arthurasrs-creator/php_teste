@@ -1,8 +1,5 @@
 <?php
 require_once "config/database.php";
-
-echo "conexão realizada com sucesso!";
-
 require_once "classes/Aluno.php";
 
 session_start();
@@ -10,34 +7,47 @@ session_start();
 $indiceEdicao = null;
 $alunoEdicao = null;
 
-if (!isset($_SESSION["alunos"])) {
-    $_SESSION["alunos"] = [];
-}
-
 if (
     isset($_GET["editar"]) &&
-    isset($_SESSION["alunos"][(int) $_GET["editar"]])
+    is_numeric($_GET["editar"])
 ) {
 
     $indiceEdicao = (int) $_GET["editar"];
-    $alunoEdicao = $_SESSION["alunos"][$indiceEdicao];
+    
+    $sql = "SELECT * FROM alunos WHERE id = :id";
 
-    $nome = $alunoEdicao->getNome();
-    $idade = $alunoEdicao->getIdade();
-    $matricula = $alunoEdicao->getMatricula();
-    $curso = $alunoEdicao->getCurso();
+    $stmt = $pdo->prepare($sql);
+
+    $stmt->execute([
+        "id" => $indiceEdicao
+    ]);
+
+    $alunoEdicao =  $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if($alunoEdicao){
+        $nome = $alunoEdicao["nome"];
+        $idade = $alunoEdicao["idade"];
+        $matricula = $alunoEdicao["matricula"];
+        $curso = $alunoEdicao["curso"];
+    }
+    else{
+        $indiceEdicao = null;
+    }
 }
 
 if (
     isset($_GET["excluir"]) &&
-    isset($_SESSION["alunos"][(int) $_GET["excluir"]])
+    is_numeric($_GET["excluir"])
 ) {
+    $id = (int) $_GET["excluir"];
 
-    $indice = (int) $_GET["excluir"];
+    $sql = "DELETE FROM alunos WHERE id = :id";
+    
+    $stmt = $pdo->prepare($sql);
 
-    unset($_SESSION["alunos"][$indice]);
-
-    $_SESSION["alunos"] = array_values($_SESSION["alunos"]);
+    $stmt->execute([
+        ":id" => $id
+    ]);
 
     header("Location: index.php");
     exit;
@@ -74,22 +84,60 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $curso
         );
 
-        if (isset($_POST["indice"])) {
+        if(isset($_POST["id"])){
+            $id =  (int) $_POST["id"];
 
-            $_SESSION["alunos"][$indiceEdicao] = $aluno;
-        } else {
-            $_SESSION["alunos"][] = $aluno;
+            $sql = "
+            UPDATE alunos 
+            SET nome = :nome,
+                idade = :idade,
+                matricula = :matricula,
+                curso = :curso
+            WHERE id = :id
+            ";
+
+            $stmt = $pdo->prepare($sql);
+
+            $stmt->execute([
+                ":nome" => $aluno->getNome(),
+                ":idade" => $aluno->getIdade(),
+                ":matricula" => $aluno->getMatricula(),
+                ":curso" => $aluno->getCurso(),
+                ":id" => $id
+            ]);
         }
+        else{
+        $sql = "
+        INSERT INTO alunos (nome, idade, matricula, curso) 
+        VALUES(:nome, :idade, :matricula, :curso)
+        ";
+
+        $stmt = $pdo->prepare($sql);
+
+        $stmt->execute([
+            "nome" => $aluno->getNome(),
+            "idade" => $aluno->getIdade(),
+            "matricula" => $aluno->getMatricula(),
+            "curso" => $aluno->getCurso()
+        ]);
 
         $nome = "";
         $idade = "";
         $matricula = "";
         $curso = "";
-
+        }
         header("Location: index.php");
         exit;
     }
 }
+
+$sql = "SELECT * FROM alunos";
+
+$stmt = $pdo->prepare($sql);
+
+$stmt->execute();
+
+$alunos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 
@@ -106,7 +154,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <body>
     <form method="POST">
         <?php if ($indiceEdicao !== null): ?>
-            <input type="hidden" name="indice" value="<?= $indiceEdicao ?>">
+            <input type="hidden" name="id" value="<?= $indiceEdicao ?>">
 
         <?php endif; ?>
         <label>Nome:</label>
@@ -137,19 +185,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <?php endforeach; ?>
     <?php endif; ?>
 
-    <?php if (!empty($_SESSION["alunos"])): ?>
-        <h1>Alunos Cadastrados</h1>
-        <?php foreach ($_SESSION["alunos"] as $indice => $aluno): ?>
-            <h2>Nome: <?= htmlspecialchars($aluno->getNome())  ?></h2>
-            <h2>Idade: <?= htmlspecialchars($aluno->getIdade()) ?></h2>
-            <h2>Matricula: <?= htmlspecialchars($aluno->getMatricula()) ?></h2>
-            <h2>Curso: <?= htmlspecialchars($aluno->getCurso()) ?></h2>
-            <a href="?editar=<?= $indice ?>">Editar</a>
-            <a href="?excluir=<?= $indice ?>">Excluir</a>
+    <h1>Alunos Cadastrados</h1>
+    <?php if (empty($alunos)): ?>
+        <p>Sem alunos cadastrados</p>
+    <?php else: ?>
+        <?php foreach ($alunos as $aluno): ?>
+            <h2>ID: <?= htmlspecialchars($aluno["id"]) ?></h2>
+            <h2>Nome: <?= htmlspecialchars($aluno["nome"]) ?></h2>
+            <h2>Idade: <?= htmlspecialchars($aluno["idade"]) ?></h2>
+            <h2>Matricula: <?= htmlspecialchars($aluno["matricula"]) ?></h2>
+            <h2>Curso: <?= htmlspecialchars($aluno["curso"]) ?></h2>
+            <a href="?editar=<?= $aluno["id"] ?>">Editar</a>
+            <a href="?excluir=<?= $aluno["id"] ?>">Excluir</a>
             <hr>
-            <br><br>
         <?php endforeach; ?>
     <?php endif; ?>
+
 </body>
 
 </html>
