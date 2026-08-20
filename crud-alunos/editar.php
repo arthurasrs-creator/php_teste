@@ -1,9 +1,13 @@
 <?php
+session_start();
+
 require_once "config/database.php";
 require_once "classes/Aluno.php";
 require_once "classes/AlunoRepository.php";
+require_once "classes/AlunoController.php";
 
 $repository = new AlunoRepository($pdo);
+$controller = new AlunoController($repository);
 
 if (
     !isset($_GET["id"]) ||
@@ -34,22 +38,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $matricula = $_POST["matricula"];
     $curso = $_POST["curso"];
 
-    if (trim($nome) === "") $erros[] = "nome obrigatório";
-    if (trim($idade) === "" || $idade < 0) {
-        $erros[] = "Idade inválida";
-    }
-    if (trim($matricula) === "") $erros[] = "matricula obrigatória";
-    if (trim($curso) === "") $erros[] = "curso obrigatório";
+    $aluno = new Aluno(
+        $nome,
+        (int) $idade,
+        $matricula,
+        $curso
+    );
+
+    $erros = $controller->atualizar($id, $aluno);
 
     if (empty($erros)) {
-        $aluno = new Aluno(
-            $nome,
-            $idade,
-            $matricula,
-            $curso
-        );
-
-        $repository->atualizar($id, $aluno);
+        $_SESSION["mensagem"] = "Aluno atualizado com sucesso!";
 
         header("Location: index.php");
         exit;
@@ -85,7 +84,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <br><br>
         <button type="submit">Salvar alterações</button>
     </form>
-
+    <?php if (!empty($erros)): ?>
+        <?php foreach ($erros as $erro): ?>
+            <p><?= htmlspecialchars($erro) ?></p>
+        <?php endforeach; ?>
+    <?php endif; ?>
 </body>
 
 </html>

@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 require_once "config/database.php";
 require_once "classes/Aluno.php";
 require_once "classes/AlunoRepository.php";
@@ -21,6 +23,10 @@ $alunos = $repository->listar();
 
 <body>
     
+    <?php if (isset($_SESSION["mensagem"])): ?>
+        <p><?= htmlspecialchars($_SESSION["mensagem"]) ?></p>
+        <?php unset($_SESSION["mensagem"]) ?>
+    <?php endif; ?>
 
     <h1>Alunos Cadastrados</h1>
     <a href="criar.php">Cadastrar novo aluno</a>

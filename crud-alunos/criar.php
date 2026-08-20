@@ -1,9 +1,13 @@
 <?php 
+session_start();
+
 require_once "config/database.php";
 require_once "classes/Aluno.php";
 require_once "classes/AlunoRepository.php";
+require_once "classes/AlunoController.php";
 
 $repository = new AlunoRepository($pdo);
+$controller = new AlunoController($repository);
 
 $erros = [];
 
@@ -18,25 +22,20 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     $matricula = $_POST["matricula"];
     $curso = $_POST["curso"];
 
-    if (trim($nome) === "") $erros[] = "Nome obrigatório";
-    if (trim($idade) === "" || $idade < 0){
-        $erros[] = "Valor da idade inválida!";
-    }
-    if (trim($matricula) === "") $erros[] = "Matricula obrigatório";
-    if (trim($curso) === "") $erros[] = "Curso obrigatório";
-
-    if(empty($erros)){
-        $aluno = new Aluno(
+    $aluno = new Aluno(
         $nome,
-        $idade,
+        (int) $idade,
         $matricula,
         $curso
-        );
+    );
 
-        $repository->criar($aluno);
+    $erros = $controller->criar($aluno);
 
+    if(empty($erros)){
+        $_SESSION["mensagem"] = "Aluno criado com sucesso!";
+        
         header("Location: index.php");
-        exit();
+        exit;
     }
 }
 ?>
